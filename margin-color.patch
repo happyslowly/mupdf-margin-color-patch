@@ -1,0 +1,70 @@
+diff --git a/platform/x11/x11_main.c b/platform/x11/x11_main.c
+index 86ddfc46..ca97bc28 100644
+--- a/platform/x11/x11_main.c
++++ b/platform/x11/x11_main.c
+@@ -92,7 +92,6 @@ static int transition_dirty = 0;
+ static int dirtysearch = 0;
+ static char *password = "";
+ static XColor xbgcolor;
+-static XColor xshcolor;
+ static int reqw = 0;
+ static int reqh = 0;
+ static char copylatin1[1024 * 16] = "";
+@@ -222,16 +221,7 @@ static void winopen(void)
+ 	xcwait = XCreateFontCursor(xdpy, XC_watch);
+ 	xccaret = XCreateFontCursor(xdpy, XC_xterm);
+ 
+-	xbgcolor.red = 0x7000;
+-	xbgcolor.green = 0x7000;
+-	xbgcolor.blue = 0x7000;
+-
+-	xshcolor.red = 0x4000;
+-	xshcolor.green = 0x4000;
+-	xshcolor.blue = 0x4000;
+-
+ 	XAllocColor(xdpy, DefaultColormap(xdpy, xscr), &xbgcolor);
+-	XAllocColor(xdpy, DefaultColormap(xdpy, xscr), &xshcolor);
+ 
+ 	xwin = XCreateWindow(xdpy, DefaultRootWindow(xdpy),
+ 		10, 10, 200, 100, 0,
+@@ -533,10 +523,6 @@ static void winblit(pdfapp_t *app)
+ 		fillrect(0, 0, gapp.winw, y0);
+ 		fillrect(0, y1, gapp.winw, gapp.winh - y1);
+ 
+-		XSetForeground(xdpy, xgc, xshcolor.pixel);
+-		fillrect(x0+2, y1, image_w, 2);
+-		fillrect(x1, y0+2, 2, image_h);
+-
+ 		if (gapp.iscopying || justcopied)
+ 		{
+ 			pdfapp_invert(&gapp, gapp.selr);
+@@ -849,6 +835,7 @@ static void usage(void)
+ 	fprintf(stderr, "\t-r -\tresolution\n");
+ 	fprintf(stderr, "\t-A -\tset anti-aliasing quality in bits (0=off, 8=best)\n");
+ 	fprintf(stderr, "\t-C -\tRRGGBB (tint color in hexadecimal syntax)\n");
++	fprintf(stderr, "\t-M -\tRRGGBB (margin color in hexadecimal syntax)\n");
+ 	fprintf(stderr, "\t-W -\tpage width for EPUB layout\n");
+ 	fprintf(stderr, "\t-H -\tpage height for EPUB layout\n");
+ 	fprintf(stderr, "\t-I -\tinvert colors\n");
+@@ -886,7 +873,7 @@ int main(int argc, char **argv)
+ 
+ 	pdfapp_init(ctx, &gapp);
+ 
+-	while ((c = fz_getopt(argc, argv, "Ip:r:A:C:W:H:S:U:Xb:")) != -1)
++	while ((c = fz_getopt(argc, argv, "Ip:r:A:C:M:W:H:S:U:Xb:")) != -1)
+ 	{
+ 		switch (c)
+ 		{
+@@ -897,6 +884,12 @@ int main(int argc, char **argv)
+ 			gapp.tint_g = (c >> 8) & 255;
+ 			gapp.tint_b = (c) & 255;
+ 			break;
++		case 'M':
++			c = strtol(fz_optarg, NULL, 16);
++			xbgcolor.red = ((c >> 16) & 255) << 8;
++			xbgcolor.green = ((c >> 8) & 255) << 8;
++			xbgcolor.blue = ((c) & 255) << 8;
++			break;
+ 		case 'p': password = fz_optarg; break;
+ 		case 'r': resolution = atoi(fz_optarg); break;
+ 		case 'I': gapp.invert = 1; break;
